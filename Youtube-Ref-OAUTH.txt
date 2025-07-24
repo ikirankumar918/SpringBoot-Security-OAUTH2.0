@@ -1,0 +1,13 @@
+https://www.youtube.com/watch?v=EcPSiQPgaqo
+
+OAuth2.0 Spring boot Resource Server Security | Java | Part - 2 | Tutorial | Learn In Simple Way
+By Amol kumar
+===========================================================================================
+https://www.youtube.com/watch?v=H1SmCoirFCo
+
+OAuth 2.0 Refresh & Access Token Setup with PKCE Flow | Spring Boot Security Tutorial
+===========================================================================================
+https://www.youtube.com/watch?v=9oFyzXgbzwo
+
+Learn OAuth2.0 Authorization Server With Spring boot Setup | Latest | Beginner | Tutorial
+===========================================================================================
