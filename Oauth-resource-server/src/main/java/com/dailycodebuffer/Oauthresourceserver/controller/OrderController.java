@@ -22,14 +22,15 @@ public class OrderController {
     }
 
     @GetMapping("/orders")
-    @PreAuthorize("hasAnyRole('VIEW','ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_VIEW','ROLE_ADMIN')")
     public List<OrderDto> getOrders() {
-        return Arrays.asList(new OrderDto(UUID.randomUUID(),"Laptop"));
+        return Arrays.asList(new OrderDto(UUID.randomUUID(),"Laptop")); //returning only the values to view
     }
 
     @PostMapping("/orders")
-    @PreAuthorize("hasRole('ADMIN')")
+    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public UUID createOrder(@RequestBody String orderType) {
-        return UUID.randomUUID(); //assuming that we have created the order and we got the UUID
+        return UUID.randomUUID(); // creating the order and we got the UUID
     }
 }

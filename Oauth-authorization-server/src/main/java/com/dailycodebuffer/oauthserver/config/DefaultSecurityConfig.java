@@ -11,6 +11,8 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -18,8 +20,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -27,15 +31,19 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.Principal;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -162,4 +170,26 @@ public class DefaultSecurityConfig {
 
     //configuring the token & customizing it we can provide role based authentication to the end users (using UserDetailsService class) .
 
+    //In the above method we have created the roles (VIEW, ADMIN) for the UserDetailsService but these roles are not going to be included in the access token for that we need to provide the 'token customization bean' which we need to do the below steps
+//here we need to use the OAuth2TokenCustomizer for it and we are using JWT encoding context, so here for OAUTH token generation we are using the JWT generator for generating the tokens.
+    // so JWT generator will look for the Authorization customizers of JWT encoding type so we need to use the JWT encoding context, if we try others it wont work
+
+    @Bean
+    public OAuth2TokenCustomizer<JwtEncodingContext> jwtEncodingContextOAuth2TokenCustomizer() {
+        return context -> { //here jwt context contains somany things like access token, refresh token etc., so we need to filter for what we need exactly
+                if (context.getTokenType().getValue().equals(OAuth2TokenType.ACCESS_TOKEN.getValue())) {
+
+                    Authentication principal = context.getPrincipal(); //using this principal object we can access all the authorities
+                    var authorities = principal.getAuthorities().stream().
+                            map(GrantedAuthority::getAuthority)
+                            .collect(Collectors.toSet());
+
+                    context.getClaims().claim("authorities", authorities);
+//so if you see the above UserDetailsService, behind the scene it will create authorities for all those roles (roles("VIEW","ADMIN") roles("VIEW")
+// which will be mentioned internally as  ROLE_ADMIN, ROLE_VIEW so all these will be stored inside the authorities.
+// so here we are accessing by "principal.getAuthorities()" and collecting and putting them in the context as authtorities.
+
+                }
+        };
+    }
 }
